@@ -1,0 +1,19 @@
+{
+  "source": "cmu_dsl_v2_fit_2026-03-02",
+  "flightAlphaMs": 191.1,
+  "flightBeta": 2.638225,
+  "dwellAlphaMs": 86.1,
+  "dwellBeta": 5.090282,
+  "wordStartMultiplier": 1.55,
+  "commonWordMultiplier": 0.88,
+  "crossHandMultiplier": 0.78,
+  "sameFingerMultiplier": 1.38,
+  "rowChangeMultiplier": 1.10,
+  "numberRowMultiplier": 1.18,
+  "sentencePauseAlphaMs": 920.0,
+  "clausePauseAlphaMs": 430.0,
+  "paragraphPauseAlphaMs": 2700.0,
+  "shiftHesitationAlphaMs": 58.0,
+  "rolloverCrossHandProbability": 0.25,
+  "rolloverSameHandProbability": 0.07
+}

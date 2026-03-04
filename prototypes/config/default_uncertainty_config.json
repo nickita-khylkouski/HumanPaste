@@ -1,0 +1,29 @@
+{
+  "enabled": true,
+  "mode": "safe",
+  "predictionProvider": "deterministic",
+  "openAIModel": "gpt-4.1-nano",
+  "openAITimeoutMs": 900,
+  "planWindowWords": 3,
+  "minWordsForSyntheticEdits": 20,
+
+  "falseStartTriggerMinWords": 60,
+  "falseStartTriggerMaxWords": 120,
+  "maxFalseStartsPerMessage": 2,
+  "falseStartPauseMinMs": 220,
+  "falseStartPauseMaxMs": 620,
+
+  "maxPredictionWords": 4,
+  "minPredictionWords": 2,
+
+  "cursorEditTriggerMinWords": 80,
+  "cursorEditTriggerMaxWords": 140,
+  "maxCursorEditsPerMessage": 1,
+  "cursorBacktrackMinChars": 4,
+  "cursorBacktrackMaxChars": 12,
+  "cursorPauseMinMs": 150,
+  "cursorPauseMaxMs": 420,
+
+  "cooldownWordsBetweenSyntheticEvents": 20,
+  "maxSyntheticLatencyBudgetMs": 1800
+}

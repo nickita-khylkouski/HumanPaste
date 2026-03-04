@@ -1,0 +1,49 @@
+# Secrets
+.env
+*.env
+
+# Build artifacts
+HumanPaste.app/Contents/MacOS/HumanPaste
+HumanPaste.app/Contents/_CodeSignature/
+HumanPaste
+*.o
+*.d
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# IDE / editor
+.claude/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Typeguard (separate project, large venv)
+typeguard/
+
+# Research docs (internal, not part of the app)
+research/
+TYPEGUARD_MASTER_PLAN.md
+COMPETITOR_RESEARCH_PLAYBOOK_2026-03-03.md
+IDENTITY_SYSTEMS_CROSS_SECTOR_BLUEPRINT_2026-03-03.md
+UPGRADE_PLAN.md
+V3_IMPLEMENTATION_PLAN.md
+
+# Keyrecs data (personal typing data)
+data/keyrecs.zip
+
+# Analysis cache
+profiles/__pycache__/
+profiles/analysis_snapshots/
+profiles/analysis_snapshots.log
+
+# Logs
+*.log

@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HumanPaste - Paste Like You Typed It</title>
+  <meta name="description" content="macOS menu bar app that turns clipboard paste into authentic human keystrokes.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@300;400;500&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --bg:#faf8f3;--bg-warm:#f3efe6;--bg-accent:#eee9dd;
+      --surface:#fff;--surface-warm:#f7f3eb;
+      --border:rgba(0,0,0,0.08);--border-warm:rgba(0,0,0,0.06);--border-gold:rgba(186,149,52,0.2);
+      --text:#111;--dim:#6b6560;--muted:#b5aea3;
+      --gold:#ba9534;--gold-bright:#d4a843;--gold-dark:#8a6d1e;--gold-dim:rgba(186,149,52,0.12);
+      --red:#c53030;--red-dim:rgba(197,48,48,0.1);
+      --green:#2f855a;--green-dim:rgba(47,133,90,0.1);
+      --serif:'Instrument Serif',Georgia,serif;
+      --mono:'JetBrains Mono','Courier New',monospace;
+      --sans:'DM Sans',-apple-system,sans-serif;
+    }
+    html{scroll-behavior:smooth}
+    body{background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.6;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+
+    /* ── AMBIENT ── */
+    .bg-rays{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+    .bg-rays::before{content:'';position:absolute;width:200%;height:200%;top:-60%;left:-50%;background:conic-gradient(from 220deg at 50% 40%,transparent 0deg,rgba(186,149,52,0.04) 20deg,transparent 40deg,transparent 160deg,rgba(186,149,52,0.03) 180deg,transparent 200deg,transparent 340deg,rgba(186,149,52,0.04) 360deg);animation:rayspin 80s linear infinite}
+    @keyframes rayspin{to{transform:rotate(360deg)}}
+    .bg-grain{position:fixed;inset:0;opacity:0.03;pointer-events:none;z-index:1;mix-blend-mode:multiply;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+    .orb{position:fixed;border-radius:50%;filter:blur(160px);pointer-events:none;z-index:0}
+    .orb-1{width:800px;height:800px;background:var(--gold);opacity:0.06;top:-300px;right:-200px;animation:drift 28s ease-in-out infinite}
+    .orb-2{width:600px;height:600px;background:var(--gold-dark);opacity:0.04;bottom:-200px;left:-150px;animation:drift 32s ease-in-out infinite reverse}
+    @keyframes drift{0%,100%{transform:translate(0,0)}25%{transform:translate(40px,-50px)}50%{transform:translate(-30px,40px)}75%{transform:translate(50px,25px)}}
+
+    .page{position:relative;z-index:2}
+    .container{max-width:1080px;margin:0 auto;padding:0 32px}
+    .container-sm{max-width:880px;margin:0 auto;padding:0 32px}
+
+    /* ── NAV ── */
+    nav{position:fixed;top:0;left:0;right:0;z-index:100;height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 36px;backdrop-filter:blur(24px) saturate(1.4);-webkit-backdrop-filter:blur(24px) saturate(1.4);background:rgba(250,248,243,0.82);border-bottom:1px solid var(--border)}
+    .logo{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--text);letter-spacing:-0.02em}
+    .logo b{color:var(--gold);font-weight:500}
+    .nav-cta{font-family:var(--mono);font-size:11px;color:#fff;background:#222;padding:5px 16px;border-radius:5px;text-decoration:none;transition:all 0.2s}
+    .nav-cta:hover{box-shadow:0 4px 16px rgba(0,0,0,0.15);transform:translateY(-1px)}
+
+    /* ── HERO ── */
+    .hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:80px 28px 60px;position:relative}
+    .overline{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:var(--gold);margin-bottom:24px;opacity:0;animation:fadeUp .7s ease .15s forwards}
+    .hero h1{font-family:var(--serif);font-style:italic;font-size:clamp(52px,9vw,108px);line-height:1.02;letter-spacing:-0.035em;color:var(--text);margin-bottom:24px;opacity:0;animation:fadeUp .7s ease .3s forwards}
+    .hero h1 em{font-style:italic;color:var(--gold)}
+    .hero-sub{max-width:500px;font-size:16px;line-height:1.7;color:var(--dim);margin-bottom:36px;opacity:0;animation:fadeUp .7s ease .45s forwards}
+    .hero-actions{display:flex;gap:14px;margin-bottom:48px;opacity:0;animation:fadeUp .7s ease .6s forwards}
+    .btn{display:inline-flex;align-items:center;font-family:var(--mono);font-size:12px;text-decoration:none;border-radius:7px;padding:10px 24px;transition:all .25s;cursor:pointer;border:none}
+    .btn-dark{background:#222;color:#fff}
+    .btn-dark:hover{box-shadow:0 8px 28px rgba(0,0,0,0.18);transform:translateY(-2px)}
+    .btn-gold{background:var(--gold);color:#fff}
+    .btn-gold:hover{box-shadow:0 8px 28px var(--gold-dim);transform:translateY(-2px)}
+    .btn-ghost{background:transparent;color:var(--dim);border:1px solid var(--border)}
+    .btn-ghost:hover{border-color:var(--text);color:var(--text)}
+    .btn-big{font-size:14px;padding:14px 36px;border-radius:8px}
+
+    /* ── KEY CAPS ── */
+    .keys{display:inline-flex;align-items:center;gap:4px}
+    .key{display:inline-flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;font-weight:500;color:var(--text);background:var(--surface);border:1px solid rgba(0,0,0,0.15);border-bottom:2px solid rgba(0,0,0,0.2);border-radius:5px;padding:3px 8px;min-width:28px;box-shadow:0 1px 2px rgba(0,0,0,0.06);line-height:1}
+    .key-sm{font-size:9px;padding:2px 6px;min-width:22px}
+    .key-plus{font-size:10px;color:var(--muted);margin:0 1px}
+
+    /* ── DEMO WINDOW ── */
+    .demo-wrap{position:relative;width:100%;max-width:700px;opacity:0;animation:fadeUp .7s ease .8s forwards}
+    .demo-window{background:#141414;border-radius:14px;border:1px solid rgba(0,0,0,0.12);overflow:hidden;box-shadow:0 2px 0 rgba(186,149,52,0.15),0 12px 48px rgba(0,0,0,0.12),0 48px 120px rgba(0,0,0,0.08)}
+    .demo-bar{display:flex;align-items:center;gap:7px;padding:11px 15px;background:rgba(255,255,255,0.025);border-bottom:1px solid rgba(255,255,255,0.06)}
+    .dt{width:11px;height:11px;border-radius:50%}
+    .dt-r{background:#ff5f57}.dt-y{background:#febc2e}.dt-g{background:#28c840}
+    .demo-bartxt{flex:1;text-align:center;font-size:11px;color:#555;margin-right:40px;font-family:var(--sans)}
+    .demo-body{padding:22px 20px 16px;min-height:96px;position:relative}
+    .demo-text{font-family:var(--mono);font-size:14.5px;line-height:1.75;color:#e8e3d8;word-break:break-word;min-height:48px}
+    .typed{transition:color .12s,opacity .3s}.typed.typo{color:var(--red)}.typed.fs{color:#666}
+    .typed.strike{text-decoration:line-through;opacity:0.35;color:#666;transition:opacity .25s,color .15s}
+    .typed.fade-out{opacity:0;transition:opacity .35s ease}
+    .cur{display:inline-block;width:2px;height:1.15em;background:var(--gold-bright);vertical-align:text-bottom;margin-left:1px;animation:blink 1s step-end infinite}
+    .cur.on{animation:none;opacity:1}
+    @keyframes blink{50%{opacity:0}}
+    .demo-stats{display:flex;gap:16px;align-items:center;margin-left:auto}
+    .demo-stat{font-family:var(--mono);font-size:10px;color:#555;display:flex;align-items:center;gap:4px;white-space:nowrap}
+    .demo-stat b{color:#ccc;font-weight:500;min-width:16px;text-align:right;transition:color .2s}
+    .demo-stat b.pop{color:var(--gold-bright)}
+    .demo-stat .unit{color:#555}
+    .demo-stat.fixes b{color:#e57373;font-weight:500}
+    .event-layer{position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none;overflow:hidden}
+    .event-tag{position:absolute;font-family:var(--mono);font-size:9px;letter-spacing:0.04em;padding:2px 8px;border-radius:4px;white-space:nowrap;opacity:0;animation:eventPop .4s ease forwards;z-index:5}
+    .event-tag.typo-ev{background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.2)}
+    .event-tag.pause-ev{background:rgba(212,168,67,0.15);color:var(--gold-bright);border:1px solid rgba(212,168,67,0.2)}
+    .event-tag.fs-ev{background:rgba(139,92,246,0.15);color:#a78bfa;border:1px solid rgba(139,92,246,0.2)}
+    .event-tag.correct-ev{background:rgba(74,222,128,0.12);color:#4ade80;border:1px solid rgba(74,222,128,0.15)}
+    .event-tag.fade{animation:eventFade .5s ease forwards}
+    @keyframes eventPop{0%{opacity:0;transform:translateY(4px) scale(0.92)}100%{opacity:1;transform:translateY(0) scale(1)}}
+    @keyframes eventFade{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-8px)}}
+    .timeline-wrap{border-top:1px solid rgba(255,255,255,0.06);padding:12px 20px 14px;position:relative;overflow:hidden}
+    .timeline-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+    .timeline-label{font-family:var(--mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:#444}
+    .timeline-legend{display:flex;gap:10px}
+    .legend-item{display:flex;align-items:center;gap:4px;font-family:var(--mono);font-size:8px;color:#555}
+    .legend-dot{width:6px;height:6px;border-radius:1px}
+    .legend-dot.l-normal{background:var(--gold-bright);opacity:0.6}
+    .legend-dot.l-typo{background:#ef4444;opacity:0.7}
+    .legend-dot.l-fs{background:#8b5cf6;opacity:0.7}
+    .legend-dot.l-pause{background:#555;opacity:0.4}
+    .timeline{display:flex;align-items:flex-end;gap:1px;height:36px;position:relative;overflow:hidden;mask-image:linear-gradient(90deg,transparent 0%,black 6%,black 100%);-webkit-mask-image:linear-gradient(90deg,transparent 0%,black 6%,black 100%)}
+    .tbar{width:2.5px;border-radius:1px 1px 0 0;flex-shrink:0;min-height:1px;transition:opacity .3s;transform-origin:bottom}
+    .tbar.t-normal{background:var(--gold-bright);opacity:0.5}
+    .tbar.t-typo{background:#ef4444;opacity:0.65}
+    .tbar.t-fs{background:#8b5cf6;opacity:0.6}
+    .tbar.t-pause{background:#555;opacity:0.2}
+    .tbar.t-del{background:#4ade80;opacity:0.4}
+    .tbar-pop{animation:tbarPop .15s ease-out}
+    @keyframes tbarPop{0%{transform:scaleY(0)}100%{transform:scaleY(1)}}
+
+    /* ── SCROLLING MARQUEE ── */
+    .marquee{overflow:hidden;padding:20px 0;background:var(--bg-warm);border-top:1px solid var(--border);border-bottom:1px solid var(--border);position:relative}
+    .marquee::before,.marquee::after{content:'';position:absolute;top:0;bottom:0;width:80px;z-index:2;pointer-events:none}
+    .marquee::before{left:0;background:linear-gradient(90deg,var(--bg-warm),transparent)}
+    .marquee::after{right:0;background:linear-gradient(90deg,transparent,var(--bg-warm))}
+    .marquee-track{display:flex;gap:48px;animation:scroll 35s linear infinite;width:max-content}
+    .marquee-track:hover{animation-play-state:paused}
+    .marquee-item{font-family:var(--serif);font-style:italic;font-size:18px;color:var(--gold-dark);white-space:nowrap;opacity:0.7;transition:opacity .3s}
+    .marquee-item:hover{opacity:1}
+    .marquee-sep{color:var(--gold);opacity:0.3;font-size:14px;display:flex;align-items:center}
+    @keyframes scroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
+    /* ── GOLD DIVIDER ── */
+    .gold-line{height:1px;background:linear-gradient(90deg,transparent 5%,var(--gold) 50%,transparent 95%);opacity:0.18;max-width:700px;margin:0 auto}
+
+    /* ── SECTIONS ── */
+    .section{padding:88px 0;position:relative}
+    .section-warm{padding:88px 0;background:var(--bg-warm);position:relative}
+    .sec-overline{display:block;font-family:var(--mono);font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:16px}
+    .sec-title{font-family:var(--serif);font-style:italic;font-size:clamp(32px,4.5vw,52px);line-height:1.08;letter-spacing:-0.025em;margin-bottom:20px;color:var(--text)}
+    .sec-body{font-size:16px;line-height:1.7;color:var(--dim);max-width:520px}
+    .sec-accent{font-family:var(--serif);font-style:italic;font-size:18px;color:var(--gold-dark);margin-top:20px;opacity:0.8}
+
+    /* ── STATS BAR ── */
+    .stats{padding:52px 0;background:var(--bg-accent);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+    .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;text-align:center}
+    .stat-num{font-family:var(--mono);font-size:32px;font-weight:500;color:var(--text);letter-spacing:-0.03em}
+    .stat-num span{color:var(--gold)}
+    .stat-label{font-size:12px;color:var(--dim);margin-top:4px}
+    .stats-quote{text-align:center;margin-top:28px;font-family:var(--serif);font-style:italic;font-size:15px;color:var(--gold-dark);opacity:0.7}
+
+    /* ── KEYSTROKE VIZ ── */
+    .viz{margin-top:48px;display:flex;flex-direction:column;gap:20px}
+    .viz-row{display:flex;align-items:center;gap:16px}
+    .viz-label{font-family:var(--mono);font-size:11px;color:var(--dim);width:100px;flex-shrink:0;text-align:right}
+    .viz-bars{flex:1;display:flex;align-items:flex-end;gap:0;height:48px;background:rgba(0,0,0,0.02);border-radius:4px;padding:4px 6px}
+    .vb{flex:1;border-radius:1px 1px 0 0;transform:scaleY(0);transform-origin:bottom;transition:transform .4s ease;min-width:0}
+    .vb+.vb{margin-left:1px}
+    .vb.m{background:var(--red);opacity:.7}.vb.h{background:var(--green);opacity:.6}.vb.p{background:var(--gold);opacity:.7}
+    .viz-bars.go .vb{transform:scaleY(1)}
+    .viz-tag{font-family:var(--mono);font-size:9px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:3px;flex-shrink:0}
+    .viz-tag.red{color:#c53030;background:var(--red-dim)}
+    .viz-tag.grn{color:#2f855a;background:var(--green-dim)}
+
+    /* ── HOW IT WORKS ── */
+    .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:48px}
+    .step{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px 24px;text-align:center;position:relative;transition:border-color .3s,box-shadow .3s}
+    .step:hover{border-color:var(--border-gold);box-shadow:0 8px 32px var(--gold-dim)}
+    .step-num{font-family:var(--mono);font-size:40px;font-weight:300;color:var(--gold);opacity:.25;line-height:1;margin-bottom:16px}
+    .step-title{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--text);margin-bottom:8px}
+    .step-desc{font-size:13px;color:var(--dim);line-height:1.5}
+    .step-arrow{position:absolute;right:-16px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:18px}
+
+    /* ── FEATURES GRID ── */
+    .features{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:48px}
+    .feat{position:relative;background:var(--surface);border-radius:13px;padding:28px 22px;overflow:hidden;transition:transform .3s,box-shadow .3s;border:1px solid var(--border)}
+    .feat:hover{transform:translateY(-2px);box-shadow:0 8px 32px var(--gold-dim);border-color:var(--border-gold)}
+    .feat-num{font-family:var(--mono);font-size:11px;color:var(--gold);opacity:.5;margin-bottom:12px}
+    .feat-title{font-family:var(--mono);font-size:13px;font-weight:500;margin-bottom:8px;color:var(--text)}
+    .feat-desc{font-size:13px;color:var(--dim);line-height:1.55}
+    .feat-accent{font-family:var(--serif);font-style:italic;font-size:12px;color:var(--gold-dark);margin-top:10px;opacity:0.7}
+
+    /* ── SETTINGS PREVIEW ── */
+    .settings-mock{margin-top:40px;max-width:400px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:14px}
+    .s-row{display:flex;align-items:center;gap:12px}
+    .s-label{font-family:var(--mono);font-size:11px;color:var(--dim);width:110px;flex-shrink:0}
+    .s-track{flex:1;height:4px;background:#e8e4dc;border-radius:2px;position:relative;overflow:hidden}
+    .s-fill{height:100%;border-radius:2px;background:var(--gold);transition:width 1s ease}
+    .s-val{font-family:var(--mono);font-size:12px;color:var(--text);width:44px;text-align:right}
+
+    /* ── HOTKEYS ── */
+    .hotkeys{margin-top:28px;display:flex;flex-wrap:wrap;gap:10px}
+    .hk{display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 14px}
+    .hk span{font-size:12px;color:var(--dim)}
+
+    /* ── CTA ── */
+    .cta-section{text-align:center;padding:100px 0 60px;background:var(--bg-accent);position:relative;overflow:hidden}
+    .cta-section .sec-title{margin-bottom:36px}
+    .cta-meta{margin-top:16px;font-family:var(--mono);font-size:11px;color:var(--dim)}
+
+    /* ── FOOTER ── */
+    footer{padding:32px 0;border-top:1px solid var(--border);text-align:center}
+    footer p{font-family:var(--serif);font-style:italic;font-size:14px;color:var(--gold-dark);opacity:0.6}
+
+    /* ── SHIMMER ── */
+    .shimmer{height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);background-size:200% 100%;animation:shimmer 4s ease-in-out infinite;opacity:0.25;margin:0 auto;max-width:600px}
+    @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+    /* ── REVEALS ── */
+    .rv{opacity:0;transform:translateY(24px);transition:opacity .65s ease,transform .65s ease}
+    .rv.vis{opacity:1;transform:translateY(0)}
+    .rv.d1{transition-delay:.08s}.rv.d2{transition-delay:.16s}.rv.d3{transition-delay:.24s}
+    .rv.d4{transition-delay:.3s}.rv.d5{transition-delay:.36s}.rv.d6{transition-delay:.42s}
+    .rv.d7{transition-delay:.48s}.rv.d8{transition-delay:.54s}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+
+    /* ── RESPONSIVE ── */
+    @media(max-width:900px){.features{grid-template-columns:repeat(2,1fr)}.steps{grid-template-columns:1fr;max-width:360px;margin-left:auto;margin-right:auto}.step-arrow{display:none}}
+    @media(max-width:768px){nav{padding:0 18px}.hero{padding:80px 20px 48px}.stats-row{grid-template-columns:repeat(2,1fr);gap:28px 16px}.viz-row{flex-wrap:wrap;gap:8px}.viz-label{width:100%;text-align:left}.hotkeys{flex-direction:column}.timeline-legend{display:none}.demo-stats{gap:10px}.marquee-item{font-size:15px}}
+    @media(max-width:520px){.features{grid-template-columns:1fr}.stat-num{font-size:26px}.demo-stats{display:none}}
+  </style>
+</head>
+<body>
+  <div class="bg-rays"></div>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="bg-grain"></div>
+
+  <div class="page">
+
+  <!-- NAV -->
+  <nav>
+    <div class="logo">Human<b>Paste</b></div>
+    <a href="#download" class="nav-cta">Download</a>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <span class="overline">macOS Menu Bar App</span>
+    <h1>Paste without<br>getting <em>caught</em></h1>
+    <p class="hero-sub">
+      Paste detection is everywhere. Schools, employers, and writing platforms
+      flag text that appears instantly. HumanPaste replays your clipboard
+      one keystroke at a time, with typos, pauses, and corrections, so it
+      looks exactly like you typed it yourself.
+    </p>
+    <div class="hero-actions">
+      <a href="#download" class="btn btn-dark">Download for macOS</a>
+      <a href="#how" class="btn btn-ghost">How it works &darr;</a>
+    </div>
+    <div class="demo-wrap">
+      <div class="demo-window">
+        <div class="demo-bar">
+          <span class="dt dt-r"></span><span class="dt dt-y"></span><span class="dt dt-g"></span>
+          <span class="demo-bartxt">Messages</span>
+          <div class="demo-stats">
+            <div class="demo-stat"><b id="ds-wpm">0</b><span class="unit">WPM</span></div>
+            <div class="demo-stat"><b id="ds-chars">0</b><span class="unit">chars</span></div>
+            <div class="demo-stat fixes"><b id="ds-fixes">0</b><span class="unit">fixes</span></div>
+          </div>
+        </div>
+        <div class="demo-body">
+          <div class="event-layer" id="events"></div>
+          <div class="demo-text" id="target"></div>
+        </div>
+        <div class="timeline-wrap">
+          <div class="timeline-header">
+            <span class="timeline-label">Keystroke timing</span>
+            <div class="timeline-legend">
+              <div class="legend-item"><div class="legend-dot l-normal"></div>typing</div>
+              <div class="legend-item"><div class="legend-dot l-typo"></div>error</div>
+              <div class="legend-item"><div class="legend-dot l-fs"></div>false start</div>
+              <div class="legend-item"><div class="legend-dot l-pause"></div>pause</div>
+            </div>
+          </div>
+          <div class="timeline" id="timeline"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SCROLLING MARQUEE -->
+  <div class="marquee">
+    <div class="marquee-track" id="marquee">
+      <span class="marquee-item">Written by robots. Typed by humans.</span>
+      <span class="marquee-sep">&bull;</span>
+      <span class="marquee-item">The fastest way to type slow.</span>
+      <span class="marquee-sep">&bull;</span>
+      <span class="marquee-item">Where machines learn to hesitate.</span>
+      <span class="marquee-sep">&bull;</span>
+      <span class="marquee-item">Your pinky is slower than your index. We know.</span>
+      <span class="marquee-sep">&bull;</span>
+      <span class="marquee-item">136 million keystrokes taught us how you think.</span>
+      <span class="marquee-sep">&bull;</span>
+      <span class="marquee-item">We spent months building something that makes mistakes.</span>
+      <span class="marquee-sep">&bull;</span>
+      <!-- duplicate for seamless loop -->
+      <span class="marquee-item">Written by robots. Typed by humans.</span>
+      <span class="marquee-sep">&bull;</span>
+      <span class="marquee-item">The fastest way to type slow.</span>
+      <span class="marquee-sep">&bull;</span>
+      <span class="marquee-item">Where machines learn to hesitate.</span>
+      <span class="marquee-sep">&bull;</span>
+      <span class="marquee-item">Your pinky is slower than your index. We know.</span>
+      <span class="marquee-sep">&bull;</span>
+      <span class="marquee-item">136 million keystrokes taught us how you think.</span>
+      <span class="marquee-sep">&bull;</span>
+      <span class="marquee-item">We spent months building something that makes mistakes.</span>
+      <span class="marquee-sep">&bull;</span>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <section class="stats">
+    <div class="container">
+      <div class="stats-row">
+        <div class="rv"><div class="stat-num" data-to="136">0</div><div class="stat-label">million keystrokes<br>analyzed</div></div>
+        <div class="rv d1"><div class="stat-num" data-to="6">0</div><div class="stat-label">behavior layers<br>simulated</div></div>
+        <div class="rv d2"><div class="stat-num" data-to="10">0</div><div class="stat-label">finger-specific<br>timing models</div></div>
+        <div class="rv d3"><div class="stat-num"><span>&lt;</span>2</div><div class="stat-label">megabytes<br>app size</div></div>
+      </div>
+      <p class="stats-quote rv d4">136 million keystrokes taught us how you think.</p>
+    </div>
+  </section>
+
+  <!-- THE PROBLEM -->
+  <section class="section" id="problem">
+    <div class="container-sm">
+      <span class="sec-overline rv">The Problem</span>
+      <h2 class="sec-title rv d1">They can tell<br>when you paste</h2>
+      <p class="sec-body rv d2">
+        Proctoring software, keystroke analytics, and writing platforms all
+        track how text enters a page. 200 words appearing in 0 milliseconds
+        is not typing. It triggers alerts, flags submissions, and gets you caught.
+        HumanPaste is the fix: it replays your clipboard as real keystrokes
+        so no system can tell the difference.
+      </p>
+      <div class="viz rv d3" id="viz">
+        <div class="viz-row">
+          <span class="viz-label">Machine paste</span>
+          <div class="viz-bars" id="bm"></div>
+          <span class="viz-tag red">Detected</span>
+        </div>
+        <div class="viz-row">
+          <span class="viz-label">Real human</span>
+          <div class="viz-bars" id="bh"></div>
+          <span class="viz-tag grn">Natural</span>
+        </div>
+        <div class="viz-row">
+          <span class="viz-label">HumanPaste</span>
+          <div class="viz-bars" id="bp"></div>
+          <span class="viz-tag grn">Natural</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="gold-line"></div>
+
+  <!-- HOW IT WORKS -->
+  <section class="section-warm" id="how">
+    <div class="container">
+      <span class="sec-overline rv">How It Works</span>
+      <h2 class="sec-title rv d1">Three steps.<br>That's it.</h2>
+      <p class="sec-accent rv d2">The fastest way to type slow.</p>
+      <div class="steps">
+        <div class="step rv d3">
+          <div class="step-num">1</div>
+          <div class="step-title">Copy any text</div>
+          <div class="step-desc">From ChatGPT, Google Docs, an email, anywhere. Just copy like you normally would.</div>
+          <span class="step-arrow">&rarr;</span>
+        </div>
+        <div class="step rv d4">
+          <div class="step-num">2</div>
+          <div class="step-title">Press one shortcut</div>
+          <div class="step-desc" style="margin-bottom:10px">Click where you want the text to go, then press:</div>
+          <div class="keys" style="justify-content:center">
+            <span class="key">ctrl</span>
+            <span class="key-plus">+</span>
+            <span class="key">shift</span>
+            <span class="key-plus">+</span>
+            <span class="key">V</span>
+          </div>
+          <span class="step-arrow">&rarr;</span>
+        </div>
+        <div class="step rv d5">
+          <div class="step-num">3</div>
+          <div class="step-title">Watch it type</div>
+          <div class="step-desc">Your text appears letter by letter with natural speed, mistakes, and corrections. Like you actually typed it.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="gold-line"></div>
+
+  <!-- THE ENGINE -->
+  <section class="section">
+    <div class="container">
+      <span class="sec-overline rv">The Engine</span>
+      <h2 class="sec-title rv d1">Six layers of<br>human behavior</h2>
+      <p class="sec-body rv d2">
+        We studied how real people actually type. The speed, the mistakes,
+        the pauses when they think. Then we built software that does exactly that.
+      </p>
+      <p class="sec-accent rv d3">Where machines learn to hesitate.</p>
+      <div class="features">
+        <div class="feat rv d1">
+          <div class="feat-num">01</div>
+          <div class="feat-title">Realistic key speed</div>
+          <div class="feat-desc">Some keys are closer together than others. We model how fast your fingers actually move between each pair of keys.</div>
+        </div>
+        <div class="feat rv d2">
+          <div class="feat-num">02</div>
+          <div class="feat-title">Finger personality</div>
+          <div class="feat-desc">Your index finger is fast. Your pinky is slow. We model each finger's timing individually, because that's how real typing works.</div>
+          <div class="feat-accent">Your pinky is slower than your index. We know.</div>
+        </div>
+        <div class="feat rv d3">
+          <div class="feat-num">03</div>
+          <div class="feat-title">Natural typos</div>
+          <div class="feat-desc">Wrong key, swapped letters, missed characters. The same kinds of mistakes you actually make, then caught and fixed, just like you would.</div>
+        </div>
+        <div class="feat rv d4">
+          <div class="feat-num">04</div>
+          <div class="feat-title">Thinking pauses</div>
+          <div class="feat-desc">People slow down at the end of sentences, pause after commas, and hesitate before big words. So does HumanPaste.</div>
+        </div>
+        <div class="feat rv d5">
+          <div class="feat-num">05</div>
+          <div class="feat-title">False starts</div>
+          <div class="feat-desc">Start typing one thing, change your mind, delete it, start over. That moment of indecision that proves you're human.</div>
+        </div>
+        <div class="feat rv d6">
+          <div class="feat-num">06</div>
+          <div class="feat-title">Fatigue &amp; bursts</div>
+          <div class="feat-desc">Speed drifts over time. Fast bursts, slow patches, gradual fatigue, second winds. Just like a real session.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="shimmer"></div>
+
+  <!-- CONTROL -->
+  <section class="section-warm">
+    <div class="container">
+      <span class="sec-overline rv">Control</span>
+      <h2 class="sec-title rv d1">Tweak it until<br>it feels like you</h2>
+      <p class="sec-body rv d2">
+        Adjust typing speed, mistake frequency, and pause behavior
+        right from the menu bar. No settings app, no restart needed.
+      </p>
+      <div class="rv d3" style="display:flex;gap:32px;flex-wrap:wrap;align-items:flex-start;margin-top:40px">
+        <div class="settings-mock">
+          <div class="s-row"><span class="s-label">target_wpm</span><div class="s-track"><div class="s-fill" data-w="47" style="width:0%"></div></div><span class="s-val">80</span></div>
+          <div class="s-row"><span class="s-label">pause_pct</span><div class="s-track"><div class="s-fill" data-w="15" style="width:0%"></div></div><span class="s-val">15%</span></div>
+          <div class="s-row"><span class="s-label">typo_rate</span><div class="s-track"><div class="s-fill" data-w="50" style="width:0%"></div></div><span class="s-val">50%</span></div>
+          <div class="s-row"><span class="s-label">flight_cap</span><div class="s-track"><div class="s-fill" data-w="44" style="width:0%"></div></div><span class="s-val">350ms</span></div>
+          <div class="s-row"><span class="s-label">uncertainty</span><div class="s-track"><div class="s-fill" data-w="100" style="width:0%;background:var(--gold)"></div></div><span class="s-val" style="color:var(--gold)">ON</span></div>
+        </div>
+        <div style="flex:1;min-width:240px">
+          <div class="hotkeys">
+            <div class="hk"><span class="keys"><span class="key key-sm">ctrl</span><span class="key-plus">+</span><span class="key key-sm">shift</span><span class="key-plus">+</span><span class="key key-sm">V</span></span><span>Paste as human</span></div>
+            <div class="hk"><span class="keys"><span class="key key-sm">ctrl</span><span class="key-plus">+</span><span class="key key-sm">shift</span><span class="key-plus">+</span><span class="key key-sm">]</span></span><span>Speed up</span></div>
+            <div class="hk"><span class="keys"><span class="key key-sm">ctrl</span><span class="key-plus">+</span><span class="key key-sm">shift</span><span class="key-plus">+</span><span class="key key-sm">[</span></span><span>Slow down</span></div>
+            <div class="hk"><span class="keys"><span class="key key-sm">esc</span></span><span>Cancel</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="gold-line"></div>
+
+  <!-- CTA -->
+  <section class="cta-section" id="download">
+    <div class="container">
+      <p class="sec-accent rv" style="margin-bottom:12px;opacity:0.6">Written by robots. Typed by humans.</p>
+      <h2 class="sec-title rv d1">Start typing<br>like a human</h2>
+      <a href="#" class="btn btn-gold btn-big rv d2">Download for macOS</a>
+      <p class="cta-meta rv d3">Free &middot; macOS 12+ &middot; 2 MB &middot; No account required</p>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container">
+      <p>We spent months building something that makes mistakes.</p>
+    </div>
+  </footer>
+
+  </div>
+
+<script>
+const SCRIPTS=[
+  [
+    {t:'type',s:"I've been think"},
+    {t:'typo',w:'g',c:'k'},
+    {t:'type',s:'ing about this for a while'},
+    {t:'pause',ms:480},
+    {t:'type',s:', and I believe '},
+    {t:'fs',s:'we could st',del:11,pause:540},
+    {t:'pause',ms:200},
+    {t:'type',s:'the best approach would be to restructure'},
+    {t:'pause',ms:180},
+    {t:'type',s:' the core module first.'},
+    {t:'pause',ms:620},
+    {t:'type',s:' Let me know what you th'},
+    {t:'typo',w:'a',c:'i'},
+    {t:'type',s:'nk.'},
+  ],
+  [
+    {t:'type',s:"Thank you for the detailed feed"},
+    {t:'typo',w:'n',c:'b'},
+    {t:'type',s:"ack. I'll incorporate"},
+    {t:'pause',ms:380},
+    {t:'type',s:" yoru"},
+    {t:'pause',ms:300},
+    {t:'del',n:4},
+    {t:'pause',ms:120},
+    {t:'type',s:"your suggestions into the next revision"},
+    {t:'pause',ms:520},
+    {t:'type',s:" and have it ready by end of "},
+    {t:'fs',s:"Mond",del:4,pause:440},
+    {t:'type',s:"Friday."},
+  ],
+  [
+    {t:'type',s:"Hey, just wanted to follow up on the "},
+    {t:'pause',ms:360},
+    {t:'fs',s:"design review we",del:16,pause:620},
+    {t:'type',s:"conversation from yesterday's standup"},
+    {t:'typo',w:'.',c:'.'},
+    {t:'type',s:" I think "},
+    {t:'pause',ms:280},
+    {t:'type',s:"we should prioritize the API refactor before"},
+    {t:'pause',ms:440},
+    {t:'type',s:" shipping v2."},
+  ]
+];
+
+class TD{
+  constructor(el){
+    this.el=el;
+    this.cur=document.createElement('span');
+    this.cur.className='cur';
+    this.el.appendChild(this.cur);
+    this.tl=document.getElementById('timeline');
+    this.evLayer=document.getElementById('events');
+    this.chars=0;this.fixes=0;this.startTime=0;this.maxBars=180;
+  }
+  async run(){
+    let i=0;
+    while(true){
+      this.resetStats();
+      await this.exec(SCRIPTS[i%SCRIPTS.length]);
+      this.cur.classList.remove('on');
+      await this.sl(3800);
+      await this.fadeOut();
+      await this.sl(1000);
+      i++;
+    }
+  }
+  resetStats(){
+    this.chars=0;this.fixes=0;this.startTime=Date.now();
+    this.tl.innerHTML='';
+    this.updateStats();
+  }
+  updateStats(){
+    const elapsed=(Date.now()-this.startTime)/1000/60;
+    const wpm=elapsed>0?Math.round((this.chars/5)/elapsed):0;
+    const wpmEl=document.getElementById('ds-wpm');
+    const charsEl=document.getElementById('ds-chars');
+    const fixesEl=document.getElementById('ds-fixes');
+    if(wpmEl)wpmEl.textContent=wpm;
+    if(charsEl)charsEl.textContent=this.chars;
+    if(fixesEl)fixesEl.textContent=this.fixes;
+  }
+  popStat(id){
+    const el=document.getElementById(id);
+    if(!el)return;
+    el.classList.add('pop');
+    setTimeout(()=>el.classList.remove('pop'),300);
+  }
+  addBar(delay,type){
+    const bar=document.createElement('div');
+    const maxH=34;
+    const h=type==='t-pause'
+      ?Math.min(maxH,3+Math.log(delay/50)*6)
+      :Math.min(maxH,Math.max(2,(delay/8)));
+    bar.className='tbar '+type+' tbar-pop';
+    bar.style.height=h+'px';
+    this.tl.appendChild(bar);
+    if(this.tl.children.length>this.maxBars){
+      this.tl.removeChild(this.tl.firstChild);
+    }
+    this.tl.scrollLeft=this.tl.scrollWidth;
+  }
+  showEvent(text,type,duration){
+    if(!this.evLayer)return;
+    const tag=document.createElement('div');
+    tag.className='event-tag '+type;
+    tag.textContent=text;
+    const curRect=this.cur.getBoundingClientRect();
+    const layerRect=this.evLayer.getBoundingClientRect();
+    let left=curRect.left-layerRect.left;
+    let top=curRect.top-layerRect.top-22;
+    left=Math.max(4,Math.min(left,layerRect.width-90));
+    top=Math.max(2,top);
+    tag.style.left=left+'px';
+    tag.style.top=top+'px';
+    this.evLayer.appendChild(tag);
+    setTimeout(()=>{
+      tag.classList.add('fade');
+      setTimeout(()=>tag.remove(),500);
+    },duration||1200);
+  }
+  async exec(sc){
+    for(const a of sc){
+      switch(a.t){
+        case'type': await this.tt(a.s,a.cls); break;
+        case'typo':
+          this.cur.classList.add('on');
+          this.ac(a.w,'typo');
+          this.addBar(250,'t-typo');
+          this.showEvent('typo','typo-ev',900);
+          await this.sl(250+Math.random()*200);
+          await this.dc(1);
+          this.addBar(80,'t-del');
+          await this.sl(80+Math.random()*90);
+          this.ac(a.c);
+          this.addBar(50,'t-normal');
+          this.fixes++;
+          this.showEvent('corrected','correct-ev',800);
+          this.popStat('ds-fixes');
+          this.updateStats();
+          await this.sl(50+Math.random()*50);
+          break;
+        case'pause':
+          this.cur.classList.remove('on');
+          if(a.ms>350)this.showEvent('thinking...','pause-ev',a.ms-100);
+          this.addBar(a.ms,'t-pause');
+          await this.sl(a.ms);
+          break;
+        case'del':
+          this.cur.classList.add('on');
+          for(let i=0;i<a.n;i++){
+            await this.dc(1);
+            this.addBar(35,'t-del');
+          }
+          this.fixes++;
+          this.popStat('ds-fixes');
+          this.updateStats();
+          break;
+        case'fs':
+          await this.tt(a.s,'fs');
+          this.showEvent('rethinking...','fs-ev',a.pause+200);
+          this.cur.classList.remove('on');
+          this.addBar(a.pause,'t-pause');
+          await this.sl(a.pause*0.4);
+          await this.strikeChars(a.del);
+          await this.sl(a.pause*0.6);
+          this.cur.classList.add('on');
+          for(let i=0;i<a.del;i++){
+            await this.dc(1);
+            this.addBar(28,'t-fs');
+          }
+          this.fixes++;
+          this.showEvent('course corrected','correct-ev',1000);
+          this.popStat('ds-fixes');
+          this.updateStats();
+          await this.sl(150+Math.random()*100);
+          break;
+        case'clear': this.clr(); break;
+      }
+    }
+  }
+  async tt(s,cls){
+    this.cur.classList.add('on');
+    for(const c of s){
+      this.ac(c,cls);
+      let d=35+Math.random()*60;
+      if(c===' ')d+=Math.random()*35;
+      if('.,!?;:'.includes(c))d+=70+Math.random()*110;
+      this.chars++;
+      this.addBar(d,cls==='fs'?'t-fs':'t-normal');
+      this.updateStats();
+      await this.sl(d);
+    }
+  }
+  ac(c,cls){
+    const s=document.createElement('span');
+    s.textContent=c;
+    s.className='typed'+(cls?' '+cls:'');
+    this.el.insertBefore(s,this.cur);
+    this.chars++;
+    this.updateStats();
+  }
+  async dc(n){
+    for(let i=0;i<n;i++){
+      const p=this.cur.previousElementSibling;
+      if(p&&p.classList.contains('typed')){
+        p.remove();
+        this.chars=Math.max(0,this.chars-1);
+      }
+      await this.sl(32+Math.random()*22);
+    }
+  }
+  async strikeChars(n){
+    let node=this.cur.previousElementSibling;
+    let count=0;
+    const targets=[];
+    while(node&&count<n){
+      if(node.classList.contains('typed')){targets.unshift(node);count++}
+      node=node.previousElementSibling;
+    }
+    for(let i=0;i<targets.length;i++){
+      targets[i].classList.add('strike');
+      if(i%3===0)await this.sl(15);
+    }
+  }
+  async fadeOut(){
+    const chars=this.el.querySelectorAll('.typed');
+    chars.forEach((c,i)=>{setTimeout(()=>c.classList.add('fade-out'),i*8)});
+    await this.sl(chars.length*8+350);
+    this.clr();
+  }
+  clr(){
+    this.el.querySelectorAll('.typed').forEach(c=>c.remove());
+    if(this.evLayer)this.evLayer.innerHTML='';
+  }
+  sl(ms){return new Promise(r=>setTimeout(r,ms))}
+}
+
+/* ── BARS ── */
+function bars(id,type){
+  const c=document.getElementById(id);if(!c)return;
+  const n=100;
+  for(let i=0;i<n;i++){
+    const b=document.createElement('div');
+    b.className='vb '+type;
+    let h;
+    if(type==='m'){
+      // Machine paste: one giant spike at the start, nothing else
+      h=i===0?38:0;
+    } else {
+      h=6+Math.random()*28+(Math.random()<.12?14+Math.random()*10:0);
+    }
+    b.style.height=Math.max(0,h)+'px';
+    b.style.transitionDelay=i*12+'ms';
+    c.appendChild(b);
+  }
+}
+
+function animateCounters(){document.querySelectorAll('[data-to]').forEach(el=>{const to=parseInt(el.dataset.to);let cur=0;const step=Math.max(1,Math.floor(to/40));const iv=setInterval(()=>{cur=Math.min(cur+step,to);el.textContent=cur;if(cur>=to){el.textContent=to;clearInterval(iv)}},35)})}
+function animateFills(){document.querySelectorAll('[data-w]').forEach(el=>{el.style.width=el.dataset.w+'%'})}
+function setupReveal(){const obs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('vis');obs.unobserve(e.target)}})},{threshold:.12,rootMargin:'0px 0px -30px 0px'});document.querySelectorAll('.rv').forEach(el=>obs.observe(el))}
+function setupViz(){const v=document.getElementById('viz');if(!v)return;new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){v.querySelectorAll('.viz-bars').forEach(b=>b.classList.add('go'))}})},{threshold:.25}).observe(v)}
+function setupStats(){const s=document.querySelector('.stats');if(!s)return;new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){animateCounters();animateFills()}})},{threshold:.3}).observe(s)}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  const t=document.getElementById('target');if(t)new TD(t).run();
+  bars('bm','m');bars('bh','h');bars('bp','p');
+  setupReveal();setupViz();setupStats();
+});
+</script>
+</body>
+</html>

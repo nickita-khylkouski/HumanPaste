@@ -1,0 +1,20 @@
+You are generating a short human-like false-start typing fragment.
+
+Rules:
+1) Return JSON only.
+2) Phrase length must be 2 to 4 words.
+3) Do not include URLs, emails, numbers-only strings, code syntax, commands, or special formatting.
+4) Phrase should plausibly continue from context, but does not need to be perfect.
+5) Keep semantic drift small and safe.
+
+Input:
+- preceding_context: {{preceding_context}}
+- upcoming_canonical_words: {{upcoming_canonical_words}}
+- mode: {{mode}}
+- max_words: {{max_words}}
+
+Output schema:
+{
+  "phrase": "...",
+  "confidence": 0.0
+}
