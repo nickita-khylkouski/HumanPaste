@@ -1,0 +1,56 @@
+{
+  "calibration": {
+    "source": "cmu_dsl_v2_fit_2026-03-02",
+    "flightAlphaMs": 191.1,
+    "flightBeta": 2.638225,
+    "dwellAlphaMs": 86.1,
+    "dwellBeta": 5.090282,
+    "wordStartMultiplier": 1.55,
+    "commonWordMultiplier": 0.88,
+    "crossHandMultiplier": 0.78,
+    "sameFingerMultiplier": 1.38,
+    "rowChangeMultiplier": 1.1,
+    "numberRowMultiplier": 1.18,
+    "sentencePauseAlphaMs": 920.0,
+    "clausePauseAlphaMs": 430.0,
+    "paragraphPauseAlphaMs": 2700.0,
+    "shiftHesitationAlphaMs": 58.0,
+    "rolloverCrossHandProbability": 0.25,
+    "rolloverSameHandProbability": 0.07
+  },
+  "sample_summary_ms": {
+    "dwell": {
+      "p05": 48.324143190538756,
+      "p50": 86.0881233258663,
+      "p95": 153.40546308234917,
+      "mean": 91.77894356335021
+    },
+    "flight": {
+      "p05": 62.486742021916264,
+      "p50": 191.89649442933052,
+      "p95": 582.6292086670031,
+      "mean": 243.16068503699765
+    }
+  },
+  "targets_ms": {
+    "dwell": {
+      "p05": 49.3,
+      "p50": 86.1,
+      "p95": 144.8
+    },
+    "flight": {
+      "p05": 81.6,
+      "p50": 191.1,
+      "p95": 568.4
+    }
+  },
+  "checks": {
+    "dwell_p05": true,
+    "dwell_p50": true,
+    "dwell_p95": true,
+    "flight_p05": true,
+    "flight_p50": true,
+    "flight_p95": true
+  },
+  "pass": true
+}

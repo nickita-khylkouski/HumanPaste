@@ -1,0 +1,74 @@
+{
+  "backspaceRate" : 0,
+  "deleteForwardRate" : 0,
+  "dwellMs" : {
+    "count" : 4,
+    "max" : 104,
+    "mean" : 91,
+    "min" : 70,
+    "p05" : 70,
+    "p25" : 70,
+    "p50" : 92,
+    "p75" : 98,
+    "p95" : 98,
+    "stddev" : 12.84523257866513
+  },
+  "excludedLongGapCount" : 0,
+  "flightMs" : {
+    "count" : 3,
+    "max" : 200,
+    "mean" : 193.33333333333334,
+    "min" : 190,
+    "p05" : 190,
+    "p25" : 190,
+    "p50" : 190,
+    "p75" : 190,
+    "p95" : 190,
+    "stddev" : 4.714045207910316
+  },
+  "generatedAtISO8601" : "2026-03-03T01:15:54Z",
+  "keyDistance" : {
+    "count" : 3,
+    "meanDistance" : 3.019398841618282,
+    "p50Distance" : 3.4481879299133333,
+    "p95Distance" : 3.4481879299133333
+  },
+  "longGapThresholdMs" : 2000,
+  "notes" : [
+    "Consent-based calibration sessions only.",
+    "By default, use timing features and avoid storing arbitrary plaintext.",
+    "Long gaps above threshold are excluded from calibration features.",
+    "Load personalizedCalibration into the main engine after review by software team."
+  ],
+  "pauseTiers" : {
+    "motorPct" : 0.6666666666666666,
+    "planningPct" : 0,
+    "thinkingPct" : 0.3333333333333333
+  },
+  "personalizedCalibration" : {
+    "clausePauseAlphaMs" : 430,
+    "commonWordMultiplier" : 0.9,
+    "crossHandMultiplier" : 1,
+    "dwellAlphaMs" : 92,
+    "dwellBeta" : 5.5,
+    "flightAlphaMs" : 190,
+    "flightBeta" : 3.8,
+    "numberRowMultiplier" : 1,
+    "paragraphPauseAlphaMs" : 2700,
+    "rolloverCrossHandProbability" : 0,
+    "rolloverSameHandProbability" : 0,
+    "rowChangeMultiplier" : 1,
+    "sameFingerMultiplier" : 1,
+    "sentencePauseAlphaMs" : 920,
+    "shiftHesitationAlphaMs" : 58,
+    "source" : "motordna_personal_profile",
+    "wordStartMultiplier" : 1.05
+  },
+  "rolloverRate" : 0,
+  "sessionCount" : 1,
+  "topDigraphs" : [
+
+  ],
+  "totalEvents" : 8,
+  "userId" : "example-user"
+}

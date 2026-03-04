@@ -29,8 +29,7 @@ venv/
 # Typeguard (separate project, large venv)
 typeguard/
 
-# Research docs (internal, not part of the app)
-research/
+# Standalone plan docs (internal, not part of the app)
 TYPEGUARD_MASTER_PLAN.md
 COMPETITOR_RESEARCH_PLAYBOOK_2026-03-03.md
 IDENTITY_SYSTEMS_CROSS_SECTOR_BLUEPRINT_2026-03-03.md
@@ -40,10 +39,36 @@ V3_IMPLEMENTATION_PLAN.md
 # Keyrecs data (personal typing data)
 data/keyrecs.zip
 
-# Analysis cache
+# Research: generated data and personal timing (exclude)
+research/datasets/
+research/analysis_snapshots/
+research/analysis_suite_latest/
+research/collection_autopilot_latest/
+research/global_timing_log.ndjson
+research/manual_training_rows.csv
+research/global_timing_features.json
+research/global_typing_3level.json
+research/global_typing_3level.md
+research/global_typing_3level_latest.json
+research/global_typing_3level_latest.md
+research/manual_3levels.json
+research/manual_3levels.md
+research/manual_features.json
+research/manual_style_behavior.json
+research/manual_style_behavior.md
+research/manual_timing_windows.json
+research/manual_timing_windows.md
+research/snapshot_trends_latest.json
+research/snapshot_trends_latest.md
+research/logger_quality_now.json
+research/logger_quality_now.md
+
+# Profiles: generated cache
 profiles/__pycache__/
 profiles/analysis_snapshots/
 profiles/analysis_snapshots.log
 
-# Logs
+# Logs and runtime files
 *.log
+*.pid
+*.status
